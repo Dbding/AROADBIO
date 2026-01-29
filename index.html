@@ -3,7 +3,7 @@ import { Camera, Upload, ShieldCheck, TreePine, AlertTriangle, Info, ChevronRigh
 
 const apiKey = ""; // 執行環境提供
 
-// 最終商業定稿：預算區間已依指示調整，單位改為「萬」以精簡顯示，並反映專業高標行情
+// 最終商業定稿：金額標示「萬」以精簡顯示，金額維持專業高標區間
 const CONSTRUCTION_METHODS = [
   { id: 1, name: "緩坡化V/U型邊溝＋粗糙化面層", type: "排水結構", scenario: "新設或既有邊溝致災點改建", benefit: "排除垂直陷阱風險，確保降雨下之結構穩定", risk: "需精算水理斷面，預防溢流掏刷路基", maintenance: "年度巡檢沖刷損耗、清理沉砂", avoid: "土石流高頻發之主集水區", estCost: "1.5 - 2.8 萬 / m" },
   { id: 2, name: "側向重型階梯/砌石逃生坡道系統", type: "生命廊道", scenario: "深溝生態陷阱強制改善", benefit: "提供高效逃生路徑，避免屍體堵塞排水", risk: "設置點需避開主水流衝擊面", maintenance: "汛期後巡查銜接點淤泥狀況", avoid: "無側向緩衝空間之深槽", estCost: "15 - 35 萬 / 座" },
@@ -57,7 +57,6 @@ export default function App() {
     setAnalyzing(true);
     setError(null);
 
-    // 準備多圖零件
     const imageParts = images.map(img => ({
       inlineData: {
         mimeType: "image/png",
@@ -65,14 +64,14 @@ export default function App() {
       }
     }));
 
-    const prompt = `你是一位頂尖的農路與生態工程專家。我上傳了 1 到 3 張農路現地的照片（可能包含不同角度）。請針對這些照片診斷「排除致災短版」：
-    1. 識別照片中的排水溝、井體、出水口是否有導致結構損毀或生物大量死亡的嚴重風險。
-    2. 根據目前台灣農路改善工程頂規行情（合理單價以「萬」為單位）給出專業建議。
+    const prompt = `你是一位頂尖的農路與生態工程專家。請針對上傳的 1-3 張照片診斷「排除致災短版」：
+    1. 識別排水溝、井體、出水口是否有導致結構損毀或生物大量死亡的風險。
+    2. 根據目前台灣農路改善工程頂規行情（以「萬」為單位）給出建議。
     
     請以 JSON 格式回傳：
     {
       "risks": ["風險點1", "風險點2"],
-      "findings": "針對所有照片內容的綜合專業診斷總結",
+      "findings": "綜合多張影像後的專業診斷總結",
       "suggestedSchemeIds": ["A", "B"],
       "suggestedMethodIds": [1, 6, 8],
       "budgetRange": "120 - 350",
@@ -106,26 +105,24 @@ export default function App() {
   };
 
   const handleExportPDF = () => {
-    // 確保點擊後稍微延遲，讓 UI 渲染穩定後再觸發列印
-    setTimeout(() => {
-      window.print();
-    }, 200);
+    window.focus();
+    window.print();
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-900 font-sans print:bg-white antialiased text-base">
+    <div className="min-h-screen bg-zinc-100 text-zinc-900 font-sans print:bg-white antialiased text-sm md:text-base">
       <div className="max-w-7xl mx-auto py-8 px-4 md:px-10">
         
         {/* Header */}
-        <header className="bg-slate-950 text-white rounded-t-3xl p-8 md:p-10 shadow-2xl relative overflow-hidden print:rounded-none">
-          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+        <header className="bg-slate-950 text-white rounded-t-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden print:rounded-none">
+          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div className="flex items-center gap-6">
-              <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
-                <HardHat className="w-10 h-10 md:w-14 md:h-14 text-emerald-400" />
+              <div className="bg-emerald-500/10 p-3 md:p-4 rounded-2xl border border-emerald-500/20">
+                <HardHat className="w-8 h-8 md:w-12 md:h-12 text-emerald-400" />
               </div>
               <div className="max-w-full">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight mb-2 break-words">農路生態友善工法決策系統</h1>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-slate-400 text-xs md:text-sm font-bold uppercase tracking-[0.2em]">
+                <h1 className="text-xl md:text-3xl font-black tracking-tight mb-1 break-words">農路生態友善工法決策系統</h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-xs md:text-sm font-bold uppercase tracking-[0.2em]">
                   <span className="whitespace-nowrap">Byte Apple AI Eco-System</span>
                   <span className="opacity-20 hidden md:inline">|</span>
                   <span className="whitespace-nowrap">V2.5 定稿版</span>
@@ -135,9 +132,9 @@ export default function App() {
             {analysisResult && (
               <button 
                 onClick={handleExportPDF}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-4 rounded-2xl transition-all flex items-center gap-2 shadow-xl print:hidden active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-5 py-3 rounded-xl transition-all flex items-center gap-2 shadow-xl print:hidden active:scale-95 text-sm md:text-base"
               >
-                <Printer className="w-5 h-5" /> 匯出專業建議書 (PDF)
+                <Printer className="w-5 h-5" /> 匯出 PDF 報告
               </button>
             )}
           </div>
@@ -154,31 +151,31 @@ export default function App() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               disabled={tab.id === 'result' && !analysisResult}
-              className={`flex-1 flex items-center justify-center gap-3 py-6 text-sm md:text-lg font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'text-slate-900 border-b-8 border-slate-900 bg-zinc-50' : 'text-zinc-400 disabled:opacity-20'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-5 text-xs md:text-base font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'text-slate-900 border-b-8 border-slate-900 bg-zinc-50' : 'text-zinc-400 disabled:opacity-20'}`}
             >
-              <tab.icon className="w-5 h-5 md:w-6 md:h-6" />
+              <tab.icon className="w-4 h-4 md:w-5 md:h-5" />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </nav>
 
         {/* Main Content */}
-        <main className="bg-white border-x border-zinc-300 min-h-[600px] p-6 md:p-14 print:border-none print:p-0">
+        <main className="bg-white border-x border-zinc-300 min-h-[500px] p-4 md:p-12 print:border-none print:p-0">
           
           {activeTab === 'upload' && (
-            <div className="max-w-4xl mx-auto py-8 animate-in fade-in duration-500">
+            <div className="max-w-4xl mx-auto py-6 animate-in fade-in duration-500">
               <div className="text-center mb-10">
-                <h3 className="text-2xl md:text-3xl font-black text-slate-800 mb-4">農路生態機能深度診斷</h3>
-                <p className="text-zinc-500 text-base md:text-xl">請上傳 1 至 3 張照片（含不同角度影像），系統將進行綜合判別與經費評估。</p>
+                <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">農路生態機能診斷</h3>
+                <p className="text-zinc-500 text-sm md:text-base">請上傳 1 至 3 張照片，系統將自動進行綜合判別與經費評估。</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 {images.map((img, idx) => (
-                  <div key={idx} className="relative group border-4 border-white shadow-lg rounded-2xl overflow-hidden h-64 bg-zinc-100">
-                    <img src={img} alt={`Site ${idx}`} className="w-full h-full object-cover" />
+                  <div key={idx} className="relative group border-4 border-white shadow rounded-xl overflow-hidden h-48 md:h-56 bg-zinc-100">
+                    <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
                     <button 
                       onClick={() => removeImage(idx)}
-                      className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -186,9 +183,9 @@ export default function App() {
                 ))}
                 
                 {images.length < 3 && (
-                  <label className="border-4 border-dotted border-zinc-200 rounded-[2rem] p-8 bg-zinc-50 hover:bg-white hover:border-slate-900 transition-all cursor-pointer flex flex-col items-center justify-center h-64 shadow-inner">
-                    <Upload className="w-12 h-12 text-zinc-300 mb-4" />
-                    <span className="text-slate-700 font-black text-center">上傳照片 ({images.length}/3)</span>
+                  <label className="border-4 border-dotted border-zinc-200 rounded-2xl p-6 bg-zinc-50 hover:bg-white hover:border-slate-900 transition-all cursor-pointer flex flex-col items-center justify-center h-48 md:h-56">
+                    <Upload className="w-10 h-10 text-zinc-300 mb-2" />
+                    <span className="text-zinc-600 font-bold text-sm">上傳照片 ({images.length}/3)</span>
                     <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
                   </label>
                 )}
@@ -197,45 +194,44 @@ export default function App() {
               {images.length > 0 && !analyzing && (
                 <button 
                   onClick={analyzeImage}
-                  className="w-full bg-emerald-950 hover:bg-emerald-900 text-white font-black py-6 md:py-8 rounded-3xl shadow-2xl transition-all transform hover:-translate-y-2 flex items-center justify-center gap-4 text-xl md:text-2xl"
+                  className="w-full bg-emerald-950 hover:bg-emerald-900 text-white font-black py-4 md:py-6 rounded-2xl shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 text-lg"
                 >
-                  <Activity className="w-8 h-8" />
-                  執行綜合診斷與預算判讀
+                  <Activity className="w-6 h-6" />
+                  執行診斷與預算判讀
                 </button>
               )}
 
               {analyzing && (
-                <div className="mt-10 p-16 bg-zinc-50 rounded-[3rem] border-4 border-zinc-200 flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-16 w-16 md:h-20 md:w-20 border-8 border-slate-950 border-t-transparent mb-8"></div>
-                  <p className="text-slate-950 font-black text-2xl md:text-3xl animate-pulse text-center">AI 正在對多張影像進行綜合分析...</p>
+                <div className="mt-8 p-12 bg-zinc-50 rounded-2xl border border-zinc-200 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-950 border-t-transparent mb-6"></div>
+                  <p className="text-slate-950 font-black text-lg animate-pulse">專家系統研判中...</p>
                 </div>
               )}
             </div>
           )}
 
           {activeTab === 'result' && analysisResult && (
-            <div id="pdf-report" className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-              {/* Print Header */}
-              <div className="hidden print:block border-b-4 border-slate-900 mb-10 pb-6">
-                <h1 className="text-3xl font-black">農路生態友善工法建議報告書</h1>
-                <p className="text-slate-500 font-bold uppercase tracking-widest mt-2">Byte Apple AI Eco-System Professional | V2.5 定稿版</p>
+            <div id="pdf-report-content" className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+              <div className="hidden print:block border-b-4 border-slate-950 mb-8 pb-4">
+                <h1 className="text-2xl font-black">農路生態友善工法建議書</h1>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Byte Apple AI Eco-System | 定稿版</p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8 space-y-12">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8 space-y-10">
                   <section>
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="p-2 bg-slate-950 rounded-xl text-white shadow-lg print:hidden"><FileText className="w-6 h-6" /></div>
-                      <h2 className="text-2xl md:text-3xl font-black text-slate-800">專家診斷說明書</h2>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-slate-950 rounded-lg text-white shadow-lg print:hidden"><FileText className="w-5 h-5" /></div>
+                      <h2 className="text-xl md:text-2xl font-black text-slate-800">專家診斷說明書</h2>
                     </div>
-                    <div className="bg-zinc-50 rounded-[2.5rem] p-8 md:p-10 border-2 border-zinc-200 print:bg-white print:p-0 print:border-none">
-                      <p className="text-slate-950 text-xl md:text-2xl leading-relaxed font-black mb-8 border-l-[12px] border-emerald-600 pl-6 md:pl-8 py-2">
+                    <div className="bg-zinc-50 rounded-3xl p-6 md:p-8 border-2 border-zinc-200 print:bg-white print:p-0 print:border-none">
+                      <p className="text-slate-950 text-lg md:text-xl leading-relaxed font-black mb-8 border-l-[10px] border-emerald-600 pl-6 py-1">
                         {analysisResult.findings}
                       </p>
-                      <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {analysisResult.risks.map((risk, i) => (
-                          <div key={i} className="bg-white border-2 border-zinc-200 px-6 py-4 rounded-2xl text-base md:text-lg font-bold text-slate-950 flex items-start gap-4">
-                            <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-1 print:hidden" />
+                          <div key={i} className="bg-white border border-zinc-200 px-5 py-3 rounded-xl text-sm font-bold text-slate-950 flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 print:hidden" />
                             <span>{risk}</span>
                           </div>
                         ))}
@@ -243,24 +239,24 @@ export default function App() {
                     </div>
                   </section>
 
-                  <section className="print:pt-10">
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="p-2 bg-emerald-800 rounded-xl text-white shadow-xl print:hidden"><ShieldCheck className="w-7 h-7" /></div>
-                      <h2 className="text-2xl md:text-3xl font-black text-slate-800">工程配置方案建議</h2>
+                  <section className="print:pt-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-emerald-800 rounded-lg text-white shadow-lg print:hidden"><ShieldCheck className="w-5 h-5" /></div>
+                      <h2 className="text-xl md:text-2xl font-black text-slate-800">工程配置方案建議</h2>
                     </div>
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                       {SCHEMES.filter(s => analysisResult.suggestedSchemeIds.includes(s.id)).map(scheme => (
-                        <div key={scheme.id} className="border-4 border-zinc-100 rounded-[3rem] p-8 md:p-12 bg-white shadow-sm print:p-4 print:border-slate-200">
+                        <div key={scheme.id} className="border-2 border-zinc-100 rounded-3xl p-6 md:p-8 bg-white shadow-sm print:border-slate-200">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-black text-slate-950 text-2xl md:text-3xl">方案 {scheme.id}: {scheme.name}</h3>
-                            <span className="px-4 py-1 bg-zinc-950 text-white rounded-full text-xs font-black uppercase">{analysisResult.ecologicalPriority}</span>
+                            <h3 className="font-black text-slate-950 text-lg md:text-xl">方案 {scheme.id}: {scheme.name}</h3>
+                            <span className="px-3 py-1 bg-zinc-950 text-white rounded-full text-[10px] font-black uppercase">{analysisResult.ecologicalPriority}</span>
                           </div>
-                          <p className="text-zinc-500 text-base md:text-xl mb-10 leading-relaxed font-bold italic">「{scheme.desc}」</p>
-                          <div className="grid grid-cols-1 gap-4">
+                          <p className="text-zinc-500 text-xs md:text-sm mb-6 font-bold italic leading-relaxed">「{scheme.desc}」</p>
+                          <div className="grid grid-cols-1 gap-3">
                             {CONSTRUCTION_METHODS.filter(m => scheme.methods.includes(m.id)).map(m => (
-                              <div key={m.id} className="p-6 bg-zinc-50 rounded-[2.5rem] border-2 border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <span className="text-lg md:text-xl font-black text-slate-900">{m.name}</span>
-                                <div className="text-emerald-950 font-mono text-base md:text-lg font-black bg-white px-5 py-2 rounded-xl border border-emerald-100">
+                              <div key={m.id} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span className="text-sm md:text-base font-black text-slate-900">{m.name}</span>
+                                <div className="text-emerald-950 font-mono text-sm font-black bg-white px-3 py-1 rounded-lg border border-emerald-100 whitespace-nowrap">
                                   {m.estCost}
                                 </div>
                               </div>
@@ -272,23 +268,23 @@ export default function App() {
                   </section>
                 </div>
 
-                <div className="lg:col-span-4 space-y-8">
-                  <div className="bg-slate-950 text-white rounded-[4rem] p-10 md:p-12 shadow-2xl lg:sticky lg:top-10 border-b-[15px] border-emerald-500 print:bg-white print:text-slate-950 print:border-4 print:border-slate-200 print:shadow-none">
-                    <h3 className="text-zinc-500 font-black text-xs uppercase tracking-[0.4em] mb-10">計畫預算總額</h3>
-                    <div className="mb-14 overflow-hidden">
-                      <div className="text-3xl md:text-4xl lg:text-5xl font-black flex items-baseline gap-2 leading-none break-all">
-                        <span className="text-2xl opacity-20 print:text-slate-400">$</span>
-                        {analysisResult.budgetRange}
-                        <span className="text-2xl font-bold ml-1">萬</span>
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="bg-slate-950 text-white rounded-3xl p-6 md:p-8 shadow-2xl lg:sticky lg:top-8 border-b-[10px] border-emerald-500 print:bg-white print:text-slate-950 print:border-2 print:border-slate-200 print:shadow-none">
+                    <h3 className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.4em] mb-8">計畫預算總額</h3>
+                    <div className="mb-10 overflow-hidden">
+                      <div className="text-4xl md:text-5xl font-black flex items-baseline gap-1 leading-none">
+                        <span className="text-xl md:text-2xl opacity-20 print:text-slate-400">$</span>
+                        <span className="break-all">{analysisResult.budgetRange}</span>
+                        <span className="text-xl md:text-2xl font-bold ml-1">萬</span>
                       </div>
-                      <p className="text-emerald-400 text-xs font-black mt-10 tracking-[0.3em] uppercase">最高標行情核算</p>
+                      <p className="text-emerald-400 text-[10px] font-black mt-6 tracking-[0.3em] uppercase">專業行情核算 (萬單位)</p>
                     </div>
-                    <div className="space-y-10 border-t-2 border-slate-900 pt-10 print:border-slate-100">
-                      <div className="flex items-start gap-6">
-                        <div className="bg-slate-900 p-4 rounded-2xl print:hidden"><Waves className="w-8 h-8 text-emerald-400" /></div>
+                    <div className="space-y-6 border-t border-slate-900 pt-8 print:border-slate-100">
+                      <div className="flex items-start gap-4">
+                        <div className="bg-slate-900 p-3 rounded-xl print:hidden"><Waves className="w-6 h-6 text-emerald-400" /></div>
                         <div>
-                          <p className="text-lg font-black mb-1">韌性結構投入</p>
-                          <p className="text-sm text-zinc-400 font-bold leading-relaxed">包含困難地形動員與耐候特殊材料溢價。</p>
+                          <p className="text-base font-black mb-1">韌性補強</p>
+                          <p className="text-xs text-zinc-400 font-bold leading-relaxed">預算已包含極端地形運輸與耐候材料溢價。</p>
                         </div>
                       </div>
                     </div>
@@ -299,36 +295,36 @@ export default function App() {
           )}
 
           {activeTab === 'methods' && (
-            <div className="space-y-16 animate-in fade-in duration-700">
-              <div className="border-b-[12px] border-zinc-100 pb-10">
-                <h2 className="text-4xl md:text-6xl font-black text-slate-950 mb-4 tracking-tighter">技術工法庫 <span className="text-emerald-600">V2.5</span></h2>
-                <p className="text-zinc-400 font-black uppercase tracking-[0.4em] text-sm">農業部農村發展及水土保持署</p>
+            <div className="space-y-12 animate-in fade-in duration-700">
+              <div className="border-b-8 border-zinc-100 pb-8">
+                <h2 className="text-3xl md:text-5xl font-black text-slate-950 mb-2 tracking-tighter">技術工法庫 <span className="text-emerald-600">V2.5</span></h2>
+                <p className="text-zinc-400 font-black uppercase tracking-[0.3em] text-xs">農業部農村發展及水土保持署</p>
               </div>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8">
                 {CONSTRUCTION_METHODS.map(method => (
-                  <div key={method.id} className="border-[6px] border-zinc-100 rounded-[4rem] bg-white hover:border-slate-950 transition-all p-8 md:p-12 flex flex-col group">
-                    <div className="flex items-center gap-6 mb-8">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[2rem] bg-slate-950 text-white flex items-center justify-center text-2xl md:text-3xl font-black shadow-xl group-hover:scale-110 transition-transform flex-shrink-0">
+                  <div key={method.id} className="border-4 border-zinc-100 rounded-3xl bg-white hover:border-slate-950 transition-all p-6 md:p-10 flex flex-col shadow-sm group">
+                    <div className="flex items-center gap-5 mb-8">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-slate-950 text-white flex items-center justify-center text-xl md:text-2xl font-black shadow-lg flex-shrink-0">
                         {method.id}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-black text-slate-950 text-xl md:text-2xl mb-1 truncate">{method.name}</p>
-                        <p className="text-xs text-emerald-600 font-black uppercase tracking-[0.3em]">{method.type}</p>
+                        <p className="font-black text-slate-950 text-lg md:text-xl mb-1 truncate">{method.name}</p>
+                        <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.3em]">{method.type}</p>
                       </div>
                     </div>
-                    <div className="space-y-8 flex-grow">
-                      <div className="flex items-center justify-between bg-zinc-50 px-8 py-6 rounded-[2.5rem] border-2 border-zinc-100 group-hover:bg-emerald-50 transition-colors">
-                        <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.3em] hidden sm:inline">概算單價</span>
-                        <span className="text-xl md:text-2xl font-black text-slate-950 font-mono tracking-tighter">{method.estCost}</span>
+                    <div className="space-y-6 flex-grow">
+                      <div className="flex items-center justify-between bg-zinc-50 px-6 py-4 rounded-xl border border-zinc-100">
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">概算單價</span>
+                        <span className="text-base md:text-xl font-black text-slate-950 font-mono">{method.estCost}</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-1">
                         <div>
-                          <p className="text-xs font-black text-zinc-400 uppercase mb-3 border-b-2 border-zinc-100 pb-1">效益評估</p>
-                          <p className="text-base text-slate-800 font-bold leading-relaxed">{method.benefit}</p>
+                          <p className="text-[10px] font-black text-zinc-400 uppercase mb-2 border-b-2 border-zinc-50 pb-1">效益評估</p>
+                          <p className="text-sm text-slate-800 font-bold leading-relaxed">{method.benefit}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-black text-zinc-400 uppercase mb-3 border-b-2 border-zinc-100 pb-1">致災排除</p>
-                          <p className="text-base text-slate-800 font-bold leading-relaxed">{method.risk}</p>
+                          <p className="text-[10px] font-black text-zinc-400 uppercase mb-2 border-b-2 border-zinc-50 pb-1">致災排除</p>
+                          <p className="text-sm text-slate-800 font-bold leading-relaxed">{method.risk}</p>
                         </div>
                       </div>
                     </div>
@@ -339,34 +335,34 @@ export default function App() {
           )}
         </main>
 
-        {/* Professional Footer */}
-        <footer className="bg-white border-x border-b border-zinc-300 rounded-b-[4rem] p-10 md:p-20 text-zinc-400 print:rounded-none">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
-            <div className="space-y-10">
-              <h4 className="font-black text-base text-slate-950 uppercase tracking-[0.5em]">技術文獻引用</h4>
-              <ul className="text-sm md:text-base font-bold space-y-6 md:y-8 leading-loose opacity-90">
-                <li className="flex gap-4 md:gap-6">
-                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[01]</span>
+        {/* Footer */}
+        <footer className="bg-white border-x border-b border-zinc-300 rounded-b-3xl p-8 md:p-16 text-zinc-400 print:rounded-none print:border-none">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+            <div className="space-y-8">
+              <h4 className="font-black text-xs text-slate-950 uppercase tracking-[0.5em]">技術文獻引用</h4>
+              <ul className="text-xs md:text-sm font-bold space-y-4 leading-loose opacity-90">
+                <li className="flex gap-4">
+                  <span className="text-emerald-600 font-black flex-shrink-0">[01]</span>
                   <span>農業部農村發展及水土保持署（原行政院農委會水保局，109年2月），《水土保持單元叢書03－水土保持設施常見生物通道》。</span>
                 </li>
-                <li className="flex gap-4 md:gap-8">
-                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[02]</span>
+                <li className="flex gap-4">
+                  <span className="text-emerald-600 font-black flex-shrink-0">[02]</span>
                   <span>行政院公共工程委員會（95年修訂），《生態工程參考手冊》。</span>
                 </li>
-                <li className="flex gap-4 md:gap-8">
-                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[03]</span>
+                <li className="flex gap-4">
+                  <span className="text-emerald-600 font-black flex-shrink-0">[03]</span>
                   <span>農業部（110年修訂），《農路設計規範》及《水土保持技術規範》。</span>
                 </li>
               </ul>
             </div>
-            <div className="space-y-10">
-              <h4 className="font-black text-base text-slate-950 uppercase tracking-[0.5em]">專案評估協議</h4>
-              <p className="text-sm md:text-base leading-relaxed font-bold opacity-80 text-justify text-slate-500">
+            <div className="space-y-8">
+              <h4 className="font-black text-xs text-slate-950 uppercase tracking-[0.5em]">專案評估協議</h4>
+              <p className="text-xs md:text-sm leading-relaxed font-bold opacity-80 text-justify text-slate-500">
                 本系統之分析建議係由 Byte Apple AI 專家模型進行判讀。 所有設計建議需經具相關執照之專業技師進行現地複核，並納入當地最新之水情、地質與公共工程總表（PCCES）進行單價修正。
               </p>
-              <div className="pt-12 border-t-2 border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 italic">Byte Apple AI Eco-System</span>
-                <span className="text-xs font-black text-slate-950 uppercase tracking-[0.2em]">© 2026 蘋果咬一口 AI Eco-System</span>
+              <div className="pt-10 border-t-2 border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 italic">Byte Apple AI Eco-System Professional</span>
+                <span className="text-[10px] font-black text-slate-950 uppercase tracking-[0.2em]">© 2026 蘋果咬一口 AI Eco-System</span>
               </div>
             </div>
           </div>
@@ -377,21 +373,22 @@ export default function App() {
         @media print {
           body, html { 
             background: white !important; 
-            font-size: 13pt !important; 
+            font-size: 12pt !important; 
             height: auto !important;
             overflow: visible !important;
             -webkit-print-color-adjust: exact !important; 
           }
           .print\\:hidden { display: none !important; }
-          header { background: #020617 !important; color: white !important; padding: 40px !important; margin: 0 !important; border-radius: 0 !important; }
-          main { border: none !important; padding: 30px 0 !important; width: 100% !important; overflow: visible !important; }
-          .rounded-[5rem], .rounded-[4rem], .rounded-[3rem], .rounded-[2.5rem], header { border-radius: 8px !important; }
-          footer { border-top: 4px solid #0f172a !important; margin-top: 40px !important; padding: 30px !important; }
-          .lg\\:col-span-12, .lg\\:col-span-7, .lg\\:col-span-5 { width: 100% !important; grid-column: span 12 / span 12 !important; }
-          .bg-zinc-50 { background: white !important; border: 1px solid #ddd !important; }
+          header { background: #020617 !important; color: white !important; padding: 30px !important; margin: 0 !important; border-radius: 0 !important; }
+          main { border: none !important; padding: 20px 0 !important; width: 100% !important; overflow: visible !important; }
+          .rounded-3xl, .rounded-2xl, header { border-radius: 8px !important; }
+          footer { border-top: 3px solid #0f172a !important; margin-top: 30px !important; padding: 20px !important; }
+          .lg\\:col-span-12, .lg\\:col-span-8, .lg\\:col-span-4 { width: 100% !important; grid-column: span 12 / span 12 !important; float: none !important; position: static !important; }
+          .bg-zinc-50, .bg-white { background: white !important; border: 1px solid #eee !important; }
           h1, h2, h3 { color: #020617 !important; }
         }
         ::selection { background: #10b981; color: white; }
+        .antialiased { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
       ` }} />
     </div>
   );
