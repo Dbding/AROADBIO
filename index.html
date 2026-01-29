@@ -1,75 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Upload, ShieldCheck, TreePine, AlertTriangle, Info, ChevronRight, Activity, CheckCircle2, RefreshCw, Banknote, Map, Waves } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, Upload, ShieldCheck, TreePine, AlertTriangle, Info, ChevronRight, Activity, CheckCircle2, RefreshCw, Banknote, Map, Waves, Printer, FileText, HardHat, X } from 'lucide-react';
 
-const apiKey = ""; // 執行環境會自動提供
+const apiKey = ""; // 執行環境提供
 
-// 整合文件後的完整工法清單與金額概估
+// 最終商業定稿：預算區間已依指示調整，單位改為「萬」以精簡顯示，並反映專業高標行情
 const CONSTRUCTION_METHODS = [
-  { id: 1, name: "緩坡化V/U型邊溝＋粗糙化", type: "排水＋逃生", scenario: "新作/改建邊溝", benefit: "降低陷阱、提升可爬出率", risk: "斷面需滿足排洪；施工精度要求", maintenance: "清疏淤積、檢查粗糙面脫落", avoid: "流速極大且需光滑面以防壅塞者", estCost: "1,500 - 3,000 / m" },
-  { id: 2, name: "局部逃生坡道（側向斜坡道）", type: "既有溝改善", scenario: "既有矩形/直立壁溝", benefit: "解除逃生陷阱", risk: "若設置不當恐集水淤積", maintenance: "定期清理坡道端淤泥", avoid: "溝內長期滿水、無逃生需求之封閉系統", estCost: "8,000 - 15,000 / 座" },
-  { id: 3, name: "橫跨溝渠棧道", type: "連通跨越", scenario: "排水溝造成移動阻隔處", benefit: "降低阻隔、導引跨越", risk: "需抗滑與抗沖；不得妨礙排水", maintenance: "檢查固定與破損", avoid: "高沖刷、漂流木多且易卡堵處", estCost: "5,000 - 12,000 / 處" },
-  { id: 4, name: "靜水池/集水井牆面緩坡化", type: "陷阱改善", scenario: "井/池具垂直壁面", benefit: "降低逃生障礙", risk: "需兼顧安全與水理功能", maintenance: "清淤與坡面完整性", avoid: "井池空間不足或結構無法改造", estCost: "15,000 - 35,000 / 處" },
-  { id: 5, name: "靜水池內另設緩斜坡道", type: "陷阱改善", scenario: "無法緩坡化牆面時", benefit: "提供逃生路徑", risk: "需避免高吸熱材；坡道不得影響排洪", maintenance: "清理附著物、檢修表面", avoid: "池內長期高流速沖刷區", estCost: "12,000 - 25,000 / 處" },
-  { id: 6, name: "涵洞/箱涵兼作通道", type: "通行＋排水", scenario: "橫向排水設施、既有涵洞", benefit: "提升穿越成功率", risk: "需兼顧消能與維護；阻塞風險", maintenance: "定期清疏、檢查底床", avoid: "漂流木/土砂量大且維護不可及處", estCost: "20,000 - 60,000 / 處" },
-  { id: 7, name: "涵洞內棧道", type: "兼容常流水", scenario: "涵洞常有水流", benefit: "讓陸域動物可通行", risk: "斷面縮減需檢核水理", maintenance: "清理棧道淤積、檢修固定", avoid: "水位變動劇烈且棧道易被掏蝕", estCost: "3,000 - 6,000 / m" },
-  { id: 8, name: "洞口/出水口消能＋緩斜坡道", type: "防沖＋通行銜接", scenario: "洞口落差/沖刷風險", benefit: "降低沖刷並利通行", risk: "設計需與水理穩定一致", maintenance: "補強位移塊石、清淤", avoid: "場地受限、無法確保穩定之急流區", estCost: "40,000 - 100,000 / 處" },
-  { id: 9, name: "邊溝—野溪銜接緩斜坡道", type: "銜接與防下切", scenario: "邊溝排入坑溝/野溪", benefit: "提供安全出入＋避免下切", risk: "固床工需耐沖；設置位置需審慎", maintenance: "檢查淘刷、補強固床", avoid: "野溪動床劇烈、無法維持坡道口者", estCost: "50,000 - 120,000 / 處" },
-  { id: 10, name: "導引/阻絕圍籬", type: "降路殺", scenario: "通道兩側、路殺熱點", benefit: "引導動物走通道、減少上路", risk: "圍籬破損即失效", maintenance: "定期巡檢修補", avoid: "未設通道卻設圍籬造成更大阻隔者", estCost: "1,200 - 2,500 / m" },
-  { id: 11, name: "多孔性護岸 (石籠/砌石)", type: "護岸/擋土＋復育", scenario: "坡趾保護、護岸需透水處", benefit: "孔隙棲地＋植生界面", risk: "需檢核穩定與沖刷", maintenance: "補植補土、檢查變形", avoid: "高落差急流且需剛性護坦者", estCost: "3,500 - 5,500 / m3" },
-  { id: 12, name: "植生工法 (打樁編柵/噴植)", type: "邊坡穩定＋復育", scenario: "相對穩定邊坡、表土可保留", benefit: "恢復微棲地、降侵蝕", risk: "初期養護需求高", maintenance: "補植、灑水、除外來種", avoid: "滑動明顯或需立即承載之邊坡", estCost: "500 - 1,500 / m2" },
-  { id: 13, name: "路肩入滲/植草溝", type: "逕流分散", scenario: "路肩/平台可配置處", benefit: "降逕流集中、改善水文", risk: "土壤滲透性需確認；淤塞風險", maintenance: "清淤、維持植生", avoid: "高含泥砂且維護不足導致淤滿者", estCost: "800 - 2,000 / m" },
-  { id: 14, name: "施工期臨時排水＋沉砂", type: "施工期保護", scenario: "開挖、臨時導改段", benefit: "降泥砂入水、保護水域", risk: "需與雨期風險匹配", maintenance: "暴雨後即刻清理", avoid: "未配置維護人力之長工期工程", estCost: "專案總額 2-5%" },
-  // 延伸工法 (源自檔案內容)
-  { id: 15, name: "河岸林緩衝帶 (複層植生帶)", type: "棲地營造", scenario: "路側緊鄰溪流或坑溝", benefit: "降水溫、提供有機碎屑、過濾污染", risk: "需耐沖刷物種；土地產權爭議", maintenance: "移除強勢外來種、補植原生樹種", avoid: "河道狹窄恐阻礙排洪處", estCost: "1,200 - 2,500 / m2" },
-  { id: 16, name: "階梯式/踏步式側向斜坡道", type: "極致逃生", scenario: "高落差或垂直高護岸", benefit: "多階緩衝利於小型生物爬行", risk: "易淤積泥砂需頻繁清疏", maintenance: "階梯縫隙清淤、結構檢查", avoid: "洪水沖刷力極大之主河道", estCost: "15,000 - 45,000 / 座" },
-  { id: 17, name: "複式斷面固床工/潛壩", type: "坡降控制", scenario: "路下溪床嚴重下切影響基礎", benefit: "穩定床面、營造魚類避難深潭", risk: "需檢核整體水理穩定度", maintenance: "災後檢查基礎淘刷", avoid: "地質極度破碎帶", estCost: "150,000 - 400,000 / 座" }
+  { id: 1, name: "緩坡化V/U型邊溝＋粗糙化面層", type: "排水結構", scenario: "新設或既有邊溝致災點改建", benefit: "排除垂直陷阱風險，確保降雨下之結構穩定", risk: "需精算水理斷面，預防溢流掏刷路基", maintenance: "年度巡檢沖刷損耗、清理沉砂", avoid: "土石流高頻發之主集水區", estCost: "1.5 - 2.8 萬 / m" },
+  { id: 2, name: "側向重型階梯/砌石逃生坡道系統", type: "生命廊道", scenario: "深溝生態陷阱強制改善", benefit: "提供高效逃生路徑，避免屍體堵塞排水", risk: "設置點需避開主水流衝擊面", maintenance: "汛期後巡查銜接點淤泥狀況", avoid: "無側向緩衝空間之深槽", estCost: "15 - 35 萬 / 座" },
+  { id: 3, name: "重型防滑溝渠橫跨棧道", type: "路基防護", scenario: "關鍵生態動線與排水溝交會熱點", benefit: "導引生物跨越，防止跌落損壞設施", risk: "需高抗沖材料，不得縮減排水斷面", maintenance: "檢查錨定件疲勞與結構鏽蝕", avoid: "大規模漂流木盛行區", estCost: "12 - 25 萬 / 處" },
+  { id: 4, name: "集水井/靜水池複合式緩坡工程", type: "致災短版", scenario: "具落差之垂直井體改善", benefit: "消除垂直阻隔，整合消能與逃生機能", risk: "需兼顧結構強度與水理消能設計", maintenance: "清淤作業時需確保坡面完整性", avoid: "結構老化嚴重之井體", estCost: "35 - 75 萬 / 處" },
+  { id: 5, name: "池內增設固定式粗糙緩坡 (合金/砌石)", type: "結構補強", scenario: "既有大型井體無法變動主體時", benefit: "建立多層次逃生階梯，降低陷阱效應", risk: "固定件需具備極高抗震與抗淘刷能力", maintenance: "定期檢查表面附著物與強度", avoid: "高度超過 6 米之井池", estCost: "25 - 45 萬 / 處" },
+  { id: 6, name: "涵洞/箱涵生態化整合工程 (高標)", type: "跨域連通", scenario: "橫向排水與生物連線關鍵界面", benefit: "解決落差、積水與掩蔽導引問題", risk: "需符合百年重現期洪水位排洪需求", maintenance: "枯水期清理底床、維護圍籬", avoid: "維修空間不足之既有涵洞", estCost: "150 - 450 萬 / 處" },
+  { id: 7, name: "涵洞內高強度懸吊棧道系統", type: "水陸分流", scenario: "常流水涵洞之通行需求", benefit: "確保生物不與暴雨徑流爭道", risk: "懸吊結構需具備高抗振與耐蝕力", maintenance: "汛期後檢視懸吊點完整度", avoid: "漂流木衝擊力極強之山澗", estCost: "8 - 15 萬 / m" },
+  { id: 8, name: "出水口消能區整合生態緩斜坡道", type: "防蝕銜接", scenario: "涵洞出口具致災性落差者", benefit: "排除落差阻隔並防止河床溯源侵蝕", risk: "需與水情模擬及下游固床工連動", maintenance: "定期加固塊石，監測基礎掏刷", avoid: "土石流潛勢區設施", estCost: "120 - 280 萬 / 處" },
+  { id: 9, name: "邊溝與自然坑溝銜接工程", type: "系統韌性", scenario: "農路排水匯入自然野溪處", benefit: "整合排水動線與生物遷移路徑", risk: "需配置重型固床工防止沖刷路基", maintenance: "大雨後觀測匯流點下切情形", avoid: "主流沖刷強勁之狹窄河段", estCost: "180 - 420 萬 / 處" },
+  { id: 10, name: "導引/抗風壓重型阻絕圍籬", type: "路殺預防", scenario: "通道兩側、生物活動頻繁區", benefit: "引導動物使用安全設施，提升效益", risk: "圍籬毀損將產生誤導陷阱", maintenance: "巡檢植物攀附與受損狀況", avoid: "未設置通道之單邊阻隔工程", estCost: "2.5 - 5.5 萬 / m" },
+  { id: 11, name: "多孔性砌石護岸 (強化基礎型)", type: "邊坡穩定", scenario: "需兼顧透水、防沖與生物需求", benefit: "提供穩定微棲地，強化抗滑能力", risk: "施工精度要求高，需確保塊石嵌合", maintenance: "清理孔隙泥沙，維持排水機能", avoid: "需承載重型構造物之邊坡", estCost: "8 - 15 萬 / m3" },
+  { id: 12, name: "專業複層植生與打樁編柵 (NbS)", type: "邊坡復育", scenario: "具雨蝕致災風險之裸露邊坡", benefit: "降低逕流沖刷，建立長效生態韌性", risk: "養護期間需配備自動灑水系統", maintenance: "初期密集除草與外來種控制", avoid: "高度風化且土層不足之岩屑坡", estCost: "1.2 - 3.5 萬 / m2" }
 ];
 
 const SCHEMES = [
-  { id: 'A', name: "「安全優先＋陷阱清零」基準方案", desc: "優先處理最具致命性的排水溝與集水井陷阱，消除路廊內的「生物死亡帶」。", methods: [1, 2, 4, 16] },
-  { id: 'B', name: "「路域－水域一體化」連通方案", desc: "強化道路與周邊水脈、溪流的連動性，將排水轉化為生態廊道。", methods: [6, 8, 9, 15, 17] },
-  { id: 'C', name: "「棲地韌性與緩衝」復育方案", desc: "著重於路側植生帶營造與多孔性結構，提升環境自癒力。", methods: [10, 11, 12, 13, 15] }
+  { id: 'A', name: "致災短版排除與結構強化方案", desc: "優先針對致命性生態陷阱及易導致路基崩塌之出水口進行結構性整治。", methods: [1, 2, 4, 8] },
+  { id: 'B', name: "跨域連通整合與韌性優化工法", desc: "將排水設施轉化為高標準生物通道，整合水域與陸域界面機能。", methods: [6, 7, 9, 10] },
+  { id: 'C', name: "自然解方 (NbS) 與棲地復育方案", desc: "運用多孔性材料與植生復育，恢復生態韌性並降低長期維護成本。", methods: [11, 12, 10, 3] }
 ];
 
 export default function App() {
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [activeTab, setActiveTab] = useState('upload'); 
   const [error, setError] = useState(null);
 
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    const remainingSlots = 3 - images.length;
+    const filesToProcess = files.slice(0, remainingSlots);
+
+    filesToProcess.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result);
-        setAnalysisResult(null);
+        setImages(prev => [...prev, reader.result]);
       };
       reader.readAsDataURL(file);
-    }
+    });
+    setAnalysisResult(null);
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setAnalysisResult(null);
   };
 
   const analyzeImage = async () => {
-    if (!image) return;
+    if (images.length === 0) return;
     setAnalyzing(true);
     setError(null);
 
-    const base64Image = image.split(',')[1];
+    // 準備多圖零件
+    const imageParts = images.map(img => ({
+      inlineData: {
+        mimeType: "image/png",
+        data: img.split(',')[1]
+      }
+    }));
+
+    const prompt = `你是一位頂尖的農路與生態工程專家。我上傳了 1 到 3 張農路現地的照片（可能包含不同角度）。請針對這些照片診斷「排除致災短版」：
+    1. 識別照片中的排水溝、井體、出水口是否有導致結構損毀或生物大量死亡的嚴重風險。
+    2. 根據目前台灣農路改善工程頂規行情（合理單價以「萬」為單位）給出專業建議。
     
-    const prompt = `你是一位農路與水土保持生態專家。請分析這張農路現地照片，並根據以下文件標準判斷：
-    1. 排水系統：是否有垂直壁面？是否需要逃生坡道或階梯式設計？
-    2. 生態連通：是否有涵洞落差？是否緊鄰溪流需要河岸林緩衝或複式固床？
-    3. 邊坡穩定：是否裸露需植生或多孔性護岸？
-    
-    請以 JSON 格式回傳（注意工法編號可包含新加入的 15-17）：
+    請以 JSON 格式回傳：
     {
-      "risks": ["具體風險描述1", "具體風險描述2"],
-      "findings": "細節觀察，並提及對應文件(如生物通道叢書)的觀察點",
+      "risks": ["風險點1", "風險點2"],
+      "findings": "針對所有照片內容的綜合專業診斷總結",
       "suggestedSchemeIds": ["A", "B"],
-      "suggestedMethodIds": [1, 16, 15],
-      "budgetRange": "概估總工程金額(萬)",
-      "ecologicalPriority": "高/中/低 (根據風險評定)"
+      "suggestedMethodIds": [1, 6, 8],
+      "budgetRange": "120 - 350",
+      "ecologicalPriority": "高度緊急/優先施作"
     }`;
 
     try {
@@ -80,7 +87,7 @@ export default function App() {
           contents: [{
             parts: [
               { text: prompt },
-              { inlineData: { mimeType: "image/png", data: base64Image } }
+              ...imageParts
             ]
           }],
           generationConfig: { responseMimeType: "application/json" }
@@ -92,244 +99,236 @@ export default function App() {
       setAnalysisResult(result);
       setActiveTab('result');
     } catch (err) {
-      console.error(err);
-      setError("分析失敗，這可能是因為圖片不清晰或連線問題。");
+      setError("分析中斷，請確認影像品質或連線。");
     } finally {
       setAnalyzing(false);
     }
   };
 
+  const handleExportPDF = () => {
+    // 確保點擊後稍微延遲，讓 UI 渲染穩定後再觸發列印
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
+
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans p-4 md:p-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-stone-200">
+    <div className="min-h-screen bg-zinc-100 text-zinc-900 font-sans print:bg-white antialiased text-base">
+      <div className="max-w-7xl mx-auto py-8 px-4 md:px-10">
+        
         {/* Header */}
-        <header className="bg-emerald-900 p-6 text-white relative">
-          <div className="flex items-center gap-3">
-            <div className="bg-emerald-100/20 p-2 rounded-lg">
-              <TreePine className="w-8 h-8 text-emerald-300" />
+        <header className="bg-slate-950 text-white rounded-t-3xl p-8 md:p-10 shadow-2xl relative overflow-hidden print:rounded-none">
+          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+            <div className="flex items-center gap-6">
+              <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
+                <HardHat className="w-10 h-10 md:w-14 md:h-14 text-emerald-400" />
+              </div>
+              <div className="max-w-full">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight mb-2 break-words">農路生態友善工法決策系統</h1>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-slate-400 text-xs md:text-sm font-bold uppercase tracking-[0.2em]">
+                  <span className="whitespace-nowrap">Byte Apple AI Eco-System</span>
+                  <span className="opacity-20 hidden md:inline">|</span>
+                  <span className="whitespace-nowrap">V2.5 定稿版</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold">農路生態友善工法決策系統 v2.0</h1>
-              <p className="text-emerald-200 text-xs opacity-90">依據《水保生物通道叢書》及《生態工程手冊》建置</p>
-            </div>
+            {analysisResult && (
+              <button 
+                onClick={handleExportPDF}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-4 rounded-2xl transition-all flex items-center gap-2 shadow-xl print:hidden active:scale-95"
+              >
+                <Printer className="w-5 h-5" /> 匯出專業建議書 (PDF)
+              </button>
+            )}
           </div>
         </header>
 
-        {/* Navigation Tabs */}
-        <nav className="flex border-b border-stone-100 bg-stone-50/50">
+        {/* Nav Tabs */}
+        <nav className="flex bg-white border-x border-b border-zinc-300 shadow-sm print:hidden">
           {[
-            { id: 'upload', label: '影像診斷', icon: Camera },
-            { id: 'result', label: '決策與金額', icon: ShieldCheck },
-            { id: 'methods', label: '工法數據庫', icon: Map }
+            { id: 'upload', label: '影像上傳', icon: Camera },
+            { id: 'result', label: '診斷結論', icon: ShieldCheck },
+            { id: 'methods', label: '技術與單價', icon: Map }
           ].map(tab => (
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               disabled={tab.id === 'result' && !analysisResult}
-              className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all ${activeTab === tab.id ? 'text-emerald-800 border-b-2 border-emerald-800 bg-white' : 'text-stone-400 opacity-80 disabled:opacity-30'}`}
+              className={`flex-1 flex items-center justify-center gap-3 py-6 text-sm md:text-lg font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'text-slate-900 border-b-8 border-slate-900 bg-zinc-50' : 'text-zinc-400 disabled:opacity-20'}`}
             >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
+              <tab.icon className="w-5 h-5 md:w-6 md:h-6" />
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </nav>
 
         {/* Main Content */}
-        <main className="p-6 md:p-8">
+        <main className="bg-white border-x border-zinc-300 min-h-[600px] p-6 md:p-14 print:border-none print:p-0">
           
-          {/* TAB: Upload */}
           {activeTab === 'upload' && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="text-center mb-8">
-                <h3 className="text-lg font-bold text-stone-700">上傳現地照片以識別生態缺口</h3>
-                <p className="text-stone-400 text-sm">AI 將掃描排水、邊坡與水陸交流點的潛在風險</p>
+            <div className="max-w-4xl mx-auto py-8 animate-in fade-in duration-500">
+              <div className="text-center mb-10">
+                <h3 className="text-2xl md:text-3xl font-black text-slate-800 mb-4">農路生態機能深度診斷</h3>
+                <p className="text-zinc-500 text-base md:text-xl">請上傳 1 至 3 張照片（含不同角度影像），系統將進行綜合判別與經費評估。</p>
               </div>
 
-              <div className="relative group flex flex-col items-center justify-center border-2 border-dashed border-stone-300 rounded-3xl p-12 bg-stone-50 hover:bg-stone-100 hover:border-emerald-400 transition-all cursor-pointer">
-                {image ? (
-                  <div className="relative w-full">
-                    <img src={image} alt="Preview" className="rounded-2xl shadow-2xl w-full h-80 object-cover" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                {images.map((img, idx) => (
+                  <div key={idx} className="relative group border-4 border-white shadow-lg rounded-2xl overflow-hidden h-64 bg-zinc-100">
+                    <img src={img} alt={`Site ${idx}`} className="w-full h-full object-cover" />
                     <button 
-                      onClick={(e) => { e.stopPropagation(); setImage(null); setAnalysisResult(null); }}
-                      className="absolute top-4 right-4 bg-white/90 text-stone-800 p-2 rounded-full shadow-lg hover:bg-red-50"
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <RefreshCw className="w-5 h-5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                ) : (
-                  <label className="flex flex-col items-center cursor-pointer w-full h-40 justify-center">
-                    <Upload className="w-12 h-12 text-stone-300 mb-4 group-hover:text-emerald-500 transition-colors" />
-                    <span className="text-stone-600 font-bold">點擊或拖放照片</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                ))}
+                
+                {images.length < 3 && (
+                  <label className="border-4 border-dotted border-zinc-200 rounded-[2rem] p-8 bg-zinc-50 hover:bg-white hover:border-slate-900 transition-all cursor-pointer flex flex-col items-center justify-center h-64 shadow-inner">
+                    <Upload className="w-12 h-12 text-zinc-300 mb-4" />
+                    <span className="text-slate-700 font-black text-center">上傳照片 ({images.length}/3)</span>
+                    <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
                   </label>
                 )}
               </div>
 
-              {image && !analyzing && (
+              {images.length > 0 && !analyzing && (
                 <button 
                   onClick={analyzeImage}
-                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3"
+                  className="w-full bg-emerald-950 hover:bg-emerald-900 text-white font-black py-6 md:py-8 rounded-3xl shadow-2xl transition-all transform hover:-translate-y-2 flex items-center justify-center gap-4 text-xl md:text-2xl"
                 >
-                  <Activity className="w-6 h-6" />
-                  執行 AI 生態診斷與預算估算
+                  <Activity className="w-8 h-8" />
+                  執行綜合診斷與預算判讀
                 </button>
               )}
 
               {analyzing && (
-                <div className="text-center py-12 bg-stone-50 rounded-3xl border border-stone-100">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-700 border-t-transparent mb-4"></div>
-                  <p className="text-stone-600 font-bold">正在判讀工法與估算金額...</p>
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl flex gap-3 animate-bounce">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                  <p className="text-sm font-medium">{error}</p>
+                <div className="mt-10 p-16 bg-zinc-50 rounded-[3rem] border-4 border-zinc-200 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-16 w-16 md:h-20 md:w-20 border-8 border-slate-950 border-t-transparent mb-8"></div>
+                  <p className="text-slate-950 font-black text-2xl md:text-3xl animate-pulse text-center">AI 正在對多張影像進行綜合分析...</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB: Analysis Results */}
           {activeTab === 'result' && analysisResult && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in duration-500">
-              
-              {/* Left Column: Diagnostics */}
-              <div className="md:col-span-2 space-y-8">
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-1.5 bg-amber-100 rounded-md text-amber-700"><AlertTriangle className="w-5 h-5" /></div>
-                    <h2 className="text-xl font-black text-stone-800">現地風險與觀察</h2>
-                  </div>
-                  <div className="bg-stone-50 rounded-2xl p-6 border border-stone-200">
-                    <p className="text-stone-600 text-sm mb-6 leading-relaxed italic border-l-4 border-emerald-500 pl-4">
-                      "{analysisResult.findings}"
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {analysisResult.risks.map((risk, i) => (
-                        <div key={i} className="bg-white border border-stone-200 px-4 py-3 rounded-xl text-xs font-bold text-stone-700 flex items-start gap-2 shadow-sm">
-                          <span className="text-amber-500 font-black mt-0.5">!</span> {risk}
+            <div id="pdf-report" className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+              {/* Print Header */}
+              <div className="hidden print:block border-b-4 border-slate-900 mb-10 pb-6">
+                <h1 className="text-3xl font-black">農路生態友善工法建議報告書</h1>
+                <p className="text-slate-500 font-bold uppercase tracking-widest mt-2">Byte Apple AI Eco-System Professional | V2.5 定稿版</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-8 space-y-12">
+                  <section>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="p-2 bg-slate-950 rounded-xl text-white shadow-lg print:hidden"><FileText className="w-6 h-6" /></div>
+                      <h2 className="text-2xl md:text-3xl font-black text-slate-800">專家診斷說明書</h2>
+                    </div>
+                    <div className="bg-zinc-50 rounded-[2.5rem] p-8 md:p-10 border-2 border-zinc-200 print:bg-white print:p-0 print:border-none">
+                      <p className="text-slate-950 text-xl md:text-2xl leading-relaxed font-black mb-8 border-l-[12px] border-emerald-600 pl-6 md:pl-8 py-2">
+                        {analysisResult.findings}
+                      </p>
+                      <div className="grid grid-cols-1 gap-4">
+                        {analysisResult.risks.map((risk, i) => (
+                          <div key={i} className="bg-white border-2 border-zinc-200 px-6 py-4 rounded-2xl text-base md:text-lg font-bold text-slate-950 flex items-start gap-4">
+                            <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-1 print:hidden" />
+                            <span>{risk}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="print:pt-10">
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="p-2 bg-emerald-800 rounded-xl text-white shadow-xl print:hidden"><ShieldCheck className="w-7 h-7" /></div>
+                      <h2 className="text-2xl md:text-3xl font-black text-slate-800">工程配置方案建議</h2>
+                    </div>
+                    <div className="space-y-8">
+                      {SCHEMES.filter(s => analysisResult.suggestedSchemeIds.includes(s.id)).map(scheme => (
+                        <div key={scheme.id} className="border-4 border-zinc-100 rounded-[3rem] p-8 md:p-12 bg-white shadow-sm print:p-4 print:border-slate-200">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-black text-slate-950 text-2xl md:text-3xl">方案 {scheme.id}: {scheme.name}</h3>
+                            <span className="px-4 py-1 bg-zinc-950 text-white rounded-full text-xs font-black uppercase">{analysisResult.ecologicalPriority}</span>
+                          </div>
+                          <p className="text-zinc-500 text-base md:text-xl mb-10 leading-relaxed font-bold italic">「{scheme.desc}」</p>
+                          <div className="grid grid-cols-1 gap-4">
+                            {CONSTRUCTION_METHODS.filter(m => scheme.methods.includes(m.id)).map(m => (
+                              <div key={m.id} className="p-6 bg-zinc-50 rounded-[2.5rem] border-2 border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <span className="text-lg md:text-xl font-black text-slate-900">{m.name}</span>
+                                <div className="text-emerald-950 font-mono text-base md:text-lg font-black bg-white px-5 py-2 rounded-xl border border-emerald-100">
+                                  {m.estCost}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </section>
+                  </section>
+                </div>
 
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-1.5 bg-emerald-100 rounded-md text-emerald-700"><ShieldCheck className="w-5 h-5" /></div>
-                    <h2 className="text-xl font-black text-stone-800">推薦應對方案</h2>
-                  </div>
-                  <div className="grid gap-4">
-                    {SCHEMES.filter(s => analysisResult.suggestedSchemeIds.includes(s.id)).map(scheme => (
-                      <div key={scheme.id} className="group border-2 border-emerald-50 rounded-2xl p-6 bg-white hover:border-emerald-200 transition-all shadow-sm">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-black text-emerald-900 text-lg">方案 {scheme.id}: {scheme.name}</h3>
-                          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${analysisResult.ecologicalPriority === '高' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                            優先級: {analysisResult.ecologicalPriority}
-                          </div>
-                        </div>
-                        <p className="text-sm text-stone-500 mb-6 leading-relaxed">{scheme.desc}</p>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {CONSTRUCTION_METHODS.filter(m => scheme.methods.includes(m.id)).map(m => (
-                            <div key={m.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex flex-col">
-                              <span className="text-xs font-black text-stone-800 mb-1">{m.name}</span>
-                              <div className="mt-auto flex items-center gap-1.5 text-emerald-600 font-mono text-[10px]">
-                                <Banknote className="w-3 h-3" /> {m.estCost}
-                              </div>
-                            </div>
-                          ))}
+                <div className="lg:col-span-4 space-y-8">
+                  <div className="bg-slate-950 text-white rounded-[4rem] p-10 md:p-12 shadow-2xl lg:sticky lg:top-10 border-b-[15px] border-emerald-500 print:bg-white print:text-slate-950 print:border-4 print:border-slate-200 print:shadow-none">
+                    <h3 className="text-zinc-500 font-black text-xs uppercase tracking-[0.4em] mb-10">計畫預算總額</h3>
+                    <div className="mb-14 overflow-hidden">
+                      <div className="text-3xl md:text-4xl lg:text-5xl font-black flex items-baseline gap-2 leading-none break-all">
+                        <span className="text-2xl opacity-20 print:text-slate-400">$</span>
+                        {analysisResult.budgetRange}
+                        <span className="text-2xl font-bold ml-1">萬</span>
+                      </div>
+                      <p className="text-emerald-400 text-xs font-black mt-10 tracking-[0.3em] uppercase">最高標行情核算</p>
+                    </div>
+                    <div className="space-y-10 border-t-2 border-slate-900 pt-10 print:border-slate-100">
+                      <div className="flex items-start gap-6">
+                        <div className="bg-slate-900 p-4 rounded-2xl print:hidden"><Waves className="w-8 h-8 text-emerald-400" /></div>
+                        <div>
+                          <p className="text-lg font-black mb-1">韌性結構投入</p>
+                          <p className="text-sm text-zinc-400 font-bold leading-relaxed">包含困難地形動員與耐候特殊材料溢價。</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-
-              {/* Right Column: Financial Summary */}
-              <div className="space-y-6">
-                <div className="bg-emerald-900 text-white rounded-3xl p-8 shadow-2xl sticky top-8">
-                  <h3 className="text-emerald-300 font-black text-xs uppercase tracking-widest mb-4">預算估算總覽</h3>
-                  <div className="mb-8">
-                    <div className="text-4xl font-black mb-1">
-                      <span className="text-lg mr-1">$</span>
-                      {analysisResult.budgetRange}
-                      <span className="text-lg ml-1">萬</span>
-                    </div>
-                    <p className="text-emerald-400 text-xs">專案初估金額 (含 10% 預備金)</p>
-                  </div>
-                  
-                  <div className="space-y-4 border-t border-emerald-800 pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-emerald-800 p-2 rounded-lg"><Waves className="w-4 h-4 text-emerald-300" /></div>
-                      <div className="text-xs">
-                        <p className="font-bold">河岸防護：中度投入</p>
-                        <p className="text-emerald-400 opacity-80 italic">建議採多孔性工法</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-emerald-800 p-2 rounded-lg"><Info className="w-4 h-4 text-emerald-300" /></div>
-                      <div className="text-xs">
-                        <p className="font-bold">生態維護：預留 3%</p>
-                        <p className="text-emerald-400 opacity-80 italic">含植生補植與清疏</p>
-                      </div>
                     </div>
                   </div>
-
-                  <button 
-                    onClick={() => window.print()}
-                    className="w-full mt-10 bg-white text-emerald-900 font-black py-4 rounded-2xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
-                  >
-                    匯出專業評估報告
-                  </button>
                 </div>
               </div>
-
             </div>
           )}
 
-          {/* TAB: Methods Gallery */}
           {activeTab === 'methods' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl font-black text-stone-800">友善工法數據庫 (整合版)</h2>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase">依文件分類</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase">含預算概估</span>
-                </div>
+            <div className="space-y-16 animate-in fade-in duration-700">
+              <div className="border-b-[12px] border-zinc-100 pb-10">
+                <h2 className="text-4xl md:text-6xl font-black text-slate-950 mb-4 tracking-tighter">技術工法庫 <span className="text-emerald-600">V2.5</span></h2>
+                <p className="text-zinc-400 font-black uppercase tracking-[0.4em] text-sm">農業部農村發展及水土保持署</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
                 {CONSTRUCTION_METHODS.map(method => (
-                  <div key={method.id} className="group border border-stone-200 rounded-3xl bg-white hover:border-emerald-500 transition-all p-5 shadow-sm">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center text-xs font-black">
-                          {method.id}
-                        </div>
-                        <div>
-                          <p className="font-black text-stone-900 text-base">{method.name}</p>
-                          <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">{method.type}</p>
-                        </div>
+                  <div key={method.id} className="border-[6px] border-zinc-100 rounded-[4rem] bg-white hover:border-slate-950 transition-all p-8 md:p-12 flex flex-col group">
+                    <div className="flex items-center gap-6 mb-8">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[2rem] bg-slate-950 text-white flex items-center justify-center text-2xl md:text-3xl font-black shadow-xl group-hover:scale-110 transition-transform flex-shrink-0">
+                        {method.id}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-950 text-xl md:text-2xl mb-1 truncate">{method.name}</p>
+                        <p className="text-xs text-emerald-600 font-black uppercase tracking-[0.3em]">{method.type}</p>
                       </div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-emerald-700 font-mono font-bold text-sm bg-emerald-50 px-3 py-2 rounded-xl">
-                        <Banknote className="w-4 h-4" />
-                        <span className="text-[10px] opacity-70 mr-auto uppercase">概估金額 (TWD)</span>
-                        {method.estCost}
+                    <div className="space-y-8 flex-grow">
+                      <div className="flex items-center justify-between bg-zinc-50 px-8 py-6 rounded-[2.5rem] border-2 border-zinc-100 group-hover:bg-emerald-50 transition-colors">
+                        <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.3em] hidden sm:inline">概算單價</span>
+                        <span className="text-xl md:text-2xl font-black text-slate-950 font-mono tracking-tighter">{method.estCost}</span>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-[11px] leading-relaxed">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
                         <div>
-                          <p className="text-stone-400 font-black uppercase mb-1">生態效益</p>
-                          <p className="text-stone-700 font-medium">{method.benefit}</p>
+                          <p className="text-xs font-black text-zinc-400 uppercase mb-3 border-b-2 border-zinc-100 pb-1">效益評估</p>
+                          <p className="text-base text-slate-800 font-bold leading-relaxed">{method.benefit}</p>
                         </div>
                         <div>
-                          <p className="text-stone-400 font-black uppercase mb-1">維護要點</p>
-                          <p className="text-stone-700 font-medium">{method.maintenance}</p>
+                          <p className="text-xs font-black text-zinc-400 uppercase mb-3 border-b-2 border-zinc-100 pb-1">致災排除</p>
+                          <p className="text-base text-slate-800 font-bold leading-relaxed">{method.risk}</p>
                         </div>
                       </div>
                     </div>
@@ -340,26 +339,60 @@ export default function App() {
           )}
         </main>
 
-        {/* Dynamic Footer for Regulatory Context */}
-        <footer className="bg-stone-50 p-8 border-t border-stone-100">
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8">
-            <div className="flex-1 space-y-3">
-              <h4 className="font-black text-xs text-stone-500 uppercase tracking-widest">技術依據</h4>
-              <ul className="text-[10px] text-stone-400 space-y-1.5 leading-relaxed">
-                <li>• 行政院農業委員會《水土保持單元叢書 03：生物通道》 (2020)</li>
-                <li>• 行政院公共工程委員會《生態工程手冊》 (2006 修訂)</li>
-                <li>• 台灣山區農路生態友善工法 (Ecotechnology) 應用指南</li>
+        {/* Professional Footer */}
+        <footer className="bg-white border-x border-b border-zinc-300 rounded-b-[4rem] p-10 md:p-20 text-zinc-400 print:rounded-none">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
+            <div className="space-y-10">
+              <h4 className="font-black text-base text-slate-950 uppercase tracking-[0.5em]">技術文獻引用</h4>
+              <ul className="text-sm md:text-base font-bold space-y-6 md:y-8 leading-loose opacity-90">
+                <li className="flex gap-4 md:gap-6">
+                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[01]</span>
+                  <span>農業部農村發展及水土保持署（原行政院農委會水保局，109年2月），《水土保持單元叢書03－水土保持設施常見生物通道》。</span>
+                </li>
+                <li className="flex gap-4 md:gap-8">
+                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[02]</span>
+                  <span>行政院公共工程委員會（95年修訂），《生態工程參考手冊》。</span>
+                </li>
+                <li className="flex gap-4 md:gap-8">
+                  <span className="text-emerald-600 font-black flex-shrink-0 text-xl">[03]</span>
+                  <span>農業部（110年修訂），《農路設計規範》及《水土保持技術規範》。</span>
+                </li>
               </ul>
             </div>
-            <div className="flex-1 space-y-3">
-              <h4 className="font-black text-xs text-stone-500 uppercase tracking-widest">聲明</h4>
-              <p className="text-[10px] text-stone-400 leading-relaxed italic">
-                本系統金額僅供初步可行性評估參考，實際金額應依行政院公共工程委員會最新「公共工程資源價格資料庫」與現地水理條件調整。
+            <div className="space-y-10">
+              <h4 className="font-black text-base text-slate-950 uppercase tracking-[0.5em]">專案評估協議</h4>
+              <p className="text-sm md:text-base leading-relaxed font-bold opacity-80 text-justify text-slate-500">
+                本系統之分析建議係由 Byte Apple AI 專家模型進行判讀。 所有設計建議需經具相關執照之專業技師進行現地複核，並納入當地最新之水情、地質與公共工程總表（PCCES）進行單價修正。
               </p>
+              <div className="pt-12 border-t-2 border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 italic">Byte Apple AI Eco-System</span>
+                <span className="text-xs font-black text-slate-950 uppercase tracking-[0.2em]">© 2026 蘋果咬一口 AI Eco-System</span>
+              </div>
             </div>
           </div>
         </footer>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body, html { 
+            background: white !important; 
+            font-size: 13pt !important; 
+            height: auto !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact !important; 
+          }
+          .print\\:hidden { display: none !important; }
+          header { background: #020617 !important; color: white !important; padding: 40px !important; margin: 0 !important; border-radius: 0 !important; }
+          main { border: none !important; padding: 30px 0 !important; width: 100% !important; overflow: visible !important; }
+          .rounded-[5rem], .rounded-[4rem], .rounded-[3rem], .rounded-[2.5rem], header { border-radius: 8px !important; }
+          footer { border-top: 4px solid #0f172a !important; margin-top: 40px !important; padding: 30px !important; }
+          .lg\\:col-span-12, .lg\\:col-span-7, .lg\\:col-span-5 { width: 100% !important; grid-column: span 12 / span 12 !important; }
+          .bg-zinc-50 { background: white !important; border: 1px solid #ddd !important; }
+          h1, h2, h3 { color: #020617 !important; }
+        }
+        ::selection { background: #10b981; color: white; }
+      ` }} />
     </div>
   );
 }
